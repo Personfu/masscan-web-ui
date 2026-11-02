@@ -1,0 +1,57 @@
+name: Verify PHP search security
+on:
+  pull_request:
+  push:
+    branches: [master]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [mysql, pgsql]
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: isolated-fixture-only
+          MYSQL_DATABASE: masscan_test
+        ports: ['3306:3306']
+        options: --health-cmd="mysqladmin ping -h 127.0.0.1 -pisolated-fixture-only" --health-interval=10s --health-timeout=5s --health-retries=10
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: isolated-fixture-only
+          POSTGRES_DB: masscan_test
+        ports: ['5432:5432']
+        options: --health-cmd="pg_isready -U postgres" --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_mysql, pdo_pgsql
+          coverage: none
+      - name: Check patched runtime floor
+        run: php -r 'if (version_compare(PHP_VERSION, "8.5.12", "<")) { exit(1); } echo PHP_VERSION, PHP_EOL;'
+      - name: Lint PHP source
+        run: find . -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Test MySQL search binding
+        if: matrix.database == 'mysql'
+        env:
+          TEST_DRIVER: mysql
+          TEST_DSN: mysql:host=127.0.0.1;dbname=masscan_test
+          TEST_USER: root
+          TEST_PASSWORD: isolated-fixture-only
+        run: php tests/browse_security.php
+      - name: Test PostgreSQL search binding
+        if: matrix.database == 'pgsql'
+        env:
+          TEST_DRIVER: pgsql
+          TEST_DSN: pgsql:host=127.0.0.1;dbname=masscan_test
+          TEST_USER: postgres
+          TEST_PASSWORD: isolated-fixture-only
+        run: php tests/browse_security.php
