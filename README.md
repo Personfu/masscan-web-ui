@@ -87,3 +87,46 @@ Took about:9 minutes,41 seconds
 root@kali:/var/www/html# 
 ```
 A total of more than 3 million results are now easily searchable. 
+
+## Security maintenance and supported deployment
+
+URL filter values for protocol, state, service, banner and text now use PDO
+prepared statements in both the result and count queries. PostgreSQL text
+search treats input as plain search terms rather than executable tsquery syntax.
+PHP 8 compatibility also requires a valid PDO fetch mode; the database health
+check now uses `PDO::FETCH_ASSOC`. Web requests receive bounded execution time,
+bounded memory and generic query errors instead of database exception details.
+
+The importer is a CLI tool. Import only trusted scan files. This project has no
+built-in authentication: place it behind an authenticated private gateway and
+limit database access to the required tables. Do not expose it directly to the
+internet or use the example `changem3` password in a real deployment. Keep real
+configuration outside publicly readable web content and source control.
+
+### PHP runtime RCE patches
+
+The PHP project fixed CVE-2026-109618 and CVE-2026-109619 in PHP 8.2.35,
+8.3.36, 8.4.27 and 8.5.12. Use the current vendor-patched release in a supported
+branch, or a distribution package with documented backports. A Composer audit
+cannot establish that the hosting engine contains these fixes. Verify the PHP
+version used by the web server, not only the command-line binary, and restart
+the relevant workers after upgrading.
+
+The included `.user.ini` disables session upload progress for CGI/FPM as an
+additional precaution. Apache module deployments need the corresponding
+server-level PHP setting. Confirm the effective web-worker configuration after
+the user-INI cache expires or workers restart. This setting is not a substitute
+for installing the runtime patches.
+
+Run `php tests/browse_security.php` with PDO SQLite for isolated regression
+checks. CI also exercises the same browsing code against MySQL and PostgreSQL
+using disposable local databases and checks the patched PHP 8.5 runtime floor.
+The tests use SQL injection strings as data; they do not scan a network or
+contact a production database. Existing code outside these filters still needs
+review, including XML import limits and deployment authentication.
+
+Primary sources:
+[PHP OOM corruption advisory](https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w),
+[PHP stale global state advisory](https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp),
+[PDO prepared statements](https://www.php.net/manual/en/pdo.prepared-statements.php),
+and [supported PHP versions](https://www.php.net/supported-versions.php).

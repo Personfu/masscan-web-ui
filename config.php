@@ -3,12 +3,12 @@
  * Some general settings
  */
 date_default_timezone_set('UTC');
-set_time_limit(0);
-ini_set("memory_limit","-1");
+set_time_limit(PHP_SAPI === 'cli' ? 0 : 30);
+ini_set("memory_limit", PHP_SAPI === 'cli' ? "-1" : "256M");
 /**
  * Error reporting settings
  */
-ini_set('display_errors', 'On');
+ini_set('display_errors', PHP_SAPI === 'cli' ? 'On' : 'Off');
 error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED & ~E_WARNING);
 /**
  * Database related configuration
