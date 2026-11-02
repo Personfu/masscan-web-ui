@@ -2,7 +2,8 @@
 /**
  * This script is only runnable form command line
  */
-if (substr(php_sapi_name(), 0, 3) != 'cli'):
+if (PHP_SAPI !== 'cli'):
+    http_response_code(403);
     die('This script can only be run from command line!');
 endif;
 include dirname(__FILE__).'/includes/functions.php';

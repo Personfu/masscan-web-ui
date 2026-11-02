@@ -23,7 +23,7 @@ function getPdo()
         }
     }
     catch (PDOException $pdoe) {
-        if (substr(php_sapi_name(), 0, 3) == 'cli'):
+        if (PHP_SAPI === 'cli'):
             echo $pdoe->getMessage();
             die;
         endif;
