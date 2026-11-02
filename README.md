@@ -97,7 +97,10 @@ PHP 8 compatibility also requires a valid PDO fetch mode; the database health
 check now uses `PDO::FETCH_ASSOC`. Web requests receive bounded execution time,
 bounded memory and generic query errors instead of database exception details.
 
-The importer is a CLI tool. Import only trusted scan files. This project has no
+The importer accepts only the exact `cli` SAPI. PHP's built-in development web
+server uses `cli-server` and receives HTTP 403 before database configuration.
+Run `python3 tests/import_boundary.py` to verify this boundary with a loopback
+server. Import only trusted scan files. This project has no
 built-in authentication: place it behind an authenticated private gateway and
 limit database access to the required tables. Do not expose it directly to the
 internet or use the example `changem3` password in a real deployment. Keep real
