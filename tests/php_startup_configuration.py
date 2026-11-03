@@ -2,11 +2,10 @@
 import os
 from pathlib import Path
 import subprocess
-import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-PHP = sys.argv[1] if len(sys.argv) > 1 else "php"
+PHP = "php"
 CHECK = """
 if ((string) get_cfg_var('session.upload_progress.enabled') !== '0'
     || (string) ini_get('session.upload_progress.enabled') !== '0') {
