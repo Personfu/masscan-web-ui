@@ -115,11 +115,31 @@ cannot establish that the hosting engine contains these fixes. Verify the PHP
 version used by the web server, not only the command-line binary, and restart
 the relevant workers after upgrading.
 
-The included `.user.ini` disables session upload progress for CGI/FPM as an
-additional precaution. Apache module deployments need the corresponding
-server-level PHP setting. Confirm the effective web-worker configuration after
-the user-INI cache expires or workers restart. This setting is not a substitute
-for installing the runtime patches.
+The separate [October 23 advisory](https://www.php.net/archive/2026.php#2026-10-23-1)
+tracks CVE-2026-115560. It requires upload progress enabled together with a
+configuration serializer of `php_binary`/`php_serialize` that application code
+changes to `php` before `session_start()`. The October 21 patch floors above
+do **not** establish a fix for this later issue; a full advisory and regular
+bugfix release were still pending at the November 3 review.
+
+Load `session.upload_progress.enabled = 0` at PHP **process startup**, using
+`php.ini`, a startup-scanned file such as `deploy/php-security.ini`, or the
+appropriate server/FPM configuration. Restart every relevant worker and verify
+the actual web SAPI. The earlier `.user.ini` precaution was removed: PHP
+explicitly says that FPM `.user.ini` and application `ini_set()` are too late
+for the confirmed request-parsing attack paths. Copying the example into the
+web root does not activate it. Confirm application upload-progress features
+before rollout; normal file uploads and ordinary sessions remain available.
+This is temporary containment, and does not replace vendor runtime patches.
+`python3 tests/php_startup_configuration.py` validates the example using an
+isolated configuration, ordinary sessions, and an unmitigated negative control.
+It does not verify a deployed web worker or perform an exploit.
+
+For Windows PHP, the [October 26 rebuild](https://www.php.net/archive/2026.php#2026-10-26-1)
+adds a separate Brotli fix (CVE-2026-111497). Use the vendor's `-1` packages
+(8.2.35-1/8.3.36-1/8.4.27-1/8.5.12-1), or later patched packages, and verify
+bundled Brotli 1.2.1 or later. The rebuild keeps the same `PHP_VERSION`, so
+`php -v` alone cannot distinguish the old bundle from the patched one.
 
 Run `php tests/browse_security.php` with PDO SQLite for isolated regression
 checks. CI also exercises the same browsing code against MySQL and PostgreSQL

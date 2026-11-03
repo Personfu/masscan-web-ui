@@ -39,6 +39,8 @@ jobs:
         run: php -r 'if (version_compare(PHP_VERSION, "8.5.12", "<")) { exit(1); } echo PHP_VERSION, PHP_EOL;'
       - name: Lint PHP source
         run: find . -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Verify startup mitigation configuration
+        run: python3 tests/php_startup_configuration.py
       - name: Reject web requests to the CLI importer
         run: python3 tests/import_boundary.py
       - name: Test MySQL search binding
